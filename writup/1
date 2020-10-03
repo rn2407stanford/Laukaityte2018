@@ -1,1 +1,79 @@
+---
+title: "Replication of ''Importance of sampling weights in multilevel modeling of international large-scale assessment data'' by Laukaityte, I. and Wiberg, M. (2018, *Communications in Statistics-Theory and Methods, 47(20)*)"
+author: "Roza Nalbandyan (rn2407@stanford.edu)"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+---
 
+
+```{r include=F}
+###Data Preparation
+
+####Load Relevant Libraries and Functions
+
+####Import data
+
+#### Data exclusion / filtering
+
+#### Prepare data for analysis - create columns etc.
+```
+
+
+## Introduction
+
+### Description of the Paper
+
+The aim of the paper was to examine different approaches concerning handling design weights in multilevel models when analyzing large-scale assessments such as TIMSS. The authors examined real data from two countries (US and Sweden) and included a simulation study. Three types of two-level models were used in the empirical and simulation studies; the student model, full model, and null model for reference purposes.
+
+### Justification of the Choice
+
+I decided to take this paper because multilevel modeling is very important in my field so I want very much to learn. Also, I am interested in large scale assessments so TIMSS data would be ideal to examine and understand multilevel models and the weighting process. So if I reproduce this paper I will learn how to reproduce articles, weighting process of multilevel models, conducting multilevel analysis, and will be able to explore TIMSS data.  
+
+### What is being reproduced?
+
+For the purpose of this course, I plan to do only the empirical study (omitting the simulation study). However, I will do my best to try to do the simulation study as well if I feel I can.
+
+### Procedure and Challenges
+
+The TIMSS data are publically available data so I have an access to the data in these two countries. I need to use the authors' proposed methods and analyze based on their three models and see whether my conclusions are the same as the authors.
+
+There are many challenges in doing this. First, I know very little about multilevel modeling and how to do it with programming languages. It is going to be a very challenging task; however, I am very motivated to do this so I am hoping that I will be successful. In addition, the TIMSS dataset is a huge dataset and I will need to handle it.
+
+### Links
+
+[Please See the Repo HERE](https://github.com/rn2407stanford/Laukaityte2018.git)
+
+## Methods
+
+### Power Analysis
+
+### Planned Sample
+
+### Materials
+
+### Procedure	
+
+### Analysis Plan
+
+### Differences from Original Study
+
+### Methods Addendum (Post Data Collection)
+
+#### Actual Sample
+
+#### Differences from pre-data collection methods plan
+
+## Results
+
+### Exploratory analyses
+
+## Discussion
+
+### Summary of Replication Attempt
+
+### Commentary
