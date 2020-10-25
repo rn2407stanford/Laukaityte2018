@@ -1,0 +1,391 @@
+---
+title: "Nervidex"
+author: "Roza"
+date: "10/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+library(foreign) # for reading spss formatted data
+library(tidyr)
+library(dplyr)
+library(stringr) # useful for some string manipulation
+library(ggplot2)
+library(writexl)
+library(openxlsx)
+library("readxl")
+
+```
+
+
+```{r}
+d = read.spss("STSDATA1.sav", to.data.frame=T)
+```
+
+
+```{r}
+head(d)
+```
+
+# Make ommited variables which are numbered as 9 as NA
+
+```{r}
+d$BSBM16A[d$BSBM16A==9] <- NA
+d$BSBM16B[d$BSBM16B==9] <- NA
+d$BSBM16C[d$BSBM16C==9] <- NA
+d$BSBM16D[d$BSBM16D==9] <- NA
+d$BSBM14A[d$BSBM14A==9] <- NA
+d$BSBM14C[d$BSBM14C==9] <- NA
+d$BSBM14E[d$BSBM14E==9] <- NA
+d$BSBM16J[d$BSBM16J==9] <- NA
+d$BSBM16K[d$BSBM16K==9] <- NA
+d$BSBM16L[d$BSBM16L==9] <- NA
+d$BSBM16M[d$BSBM16M==9] <- NA
+d$BSBG04[d$BSBG04==9] <- NA
+d$BSBG05A[d$BSBG05A==9] <- NA
+d$BSBG05B[d$BSBG05B==9] <- NA
+```
+
+
+```{r}
+head(d)
+```
+
+
+
+# creating mcs
+
+```{r}
+d %>%
+  select(BSBM16A, BSBM16B, BSBM16C, BSBM16D)
+```
+
+```{r}
+d=d %>% mutate (BSBM16C=recode(BSBM16C,
+                       `1`="4",
+                       `2`="3",
+                       `3`="2",
+                       `4`="1"))
+```
+
+```{r}
+d=d %>% mutate (BSBM16B=recode(BSBM16B,
+                       `1`="4",
+                       `2`="3",
+                       `3`="2",
+                       `4`="1"))
+```
+
+```{r}
+d %>%
+  select(BSBM16A, BSBM16D, BSBM16B, BSBM16C)
+```
+
+```{r}
+d %>%
+  select(BSBM16A, BSBM16B, BSBM16C, BSBM16D)
+```
+
+```{r}
+d$BSBM16B <- as.numeric(as.character(d$BSBM16B))
+d$BSBM16C <- as.numeric(as.character(d$BSBM16C))
+```
+
+
+```{r}
+d %>%
+  select(BSBM16A, BSBM16B, BSBM16C, BSBM16D)
+```
+
+```{r}
+d=d %>%
+  mutate( msc = (BSBM16A + BSBM16D + BSBM16B +BSBM16C)/4)
+```
+
+```{r}
+head(d)
+```
+
+```{r}
+d %>%
+select(msc)
+```
+```{r}
+d$msc<-cut(d$msc, br = c(0, 2.5, 9999), labels = c("1","0"))
+```
+
+```{r}
+d %>%
+  select(msc)
+```
+# creating atm variable
+
+```{r}
+d %>%
+  select(BSBM14A, BSBM14C, BSBM14E)
+```
+
+```{r}
+d=d %>% mutate (BSBM14C=recode(BSBM16C,
+                       `1`="4",
+                       `2`="3",
+                       `3`="2",
+                       `4`="1"))
+```
+
+
+```{r}
+d %>%
+  select(BSBM14A, BSBM14C, BSBM14E)
+```
+```{r}
+d$BSBM14C <- as.numeric(as.character(d$BSBM14C))
+```
+
+```{r}
+d=d %>%
+  mutate( atm = (BSBM14A + BSBM14C + BSBM14E)/3)
+```
+
+````{r}
+head(d)
+```
+```{r}
+d$atm<-cut(d$atm, br = c(0, 2.5, 9999), labels = c("1","0"))
+head(d)
+```
+
+# creating vm variable
+
+```{r}
+d=d %>%
+  mutate( vm = (BSBM16J + BSBM16K + BSBM16L + BSBM16M)/4)
+head(d)
+```
+
+```{r}
+d$vm<-cut(d$vm, br = c(0, 2.5, 9999), labels = c("1","0"))
+head(d)
+```
+
+# creating variable ses
+
+```{r}
+d$BSBG04<-cut(d$BSBG04, br = c(0, 2, 4, 5), labels = c("1","2","3"))
+```
+
+```{r}
+head(d)
+```
+```{r}
+d$BSBG04 <- as.numeric(as.character(d$BSBG04))
+```
+
+```{r}
+d %>%
+  select(BSBG05A, BSBG05B)
+```
+
+```{r}
+d=d %>%
+  mutate(ses0=BSBG05A + BSBG05B)
+```
+
+```{r}
+d %>%
+  select(ses0)
+```
+
+
+```{r}
+d$ses0 <- as.numeric(as.character(d$ses0))
+```
+
+```{r}
+d %>%
+  select(ses0)
+```
+
+```{r}
+d$ses0<-cut(d$ses0, br = c(0, 1.99999,2,5), labels = c("0","1", "1"))
+head(d)
+```
+
+```{r}
+d$ses0 <- as.numeric(as.character(d$ses0))
+```
+`
+ Excel command #write_xlsx(d,"~/Desktop\\VXQ3.xlsx")
+
+```{r}
+d=d %>%
+  mutate( ses=(ses0+BSBG04)/2)
+```
+
+```{r}
+  head(d)
+```
+
+```{r}
+d$ses<-cut(d$ses, br = c(0, 1.99999,2, 5), labels = c("0","1","1"))
+  head(d)
+```
+
+```{r}
+d$ses <- as.numeric(as.character(d$ses))
+head(d)
+```
+
+#Variable Sex
+
+```{r}
+d=d %>%
+  mutate(sex=BSBG01)
+```
+
+```{r}
+d=d %>% mutate(sex=recode(sex,
+                          `1`="0",
+                          `2`="1"))
+```
+
+
+```{r}
+head(d)
+```
+
+SCHOOL LEVEL VARIABLES
+
+```{r}
+c <- read_excel("SchoolQstMerged.xlsx")
+head(c)
+```
+
+# Make ommited variables which are numbered as 9 as NA
+
+```{r}
+c$BCBG11A[c$BCBG11A==9] <- NA
+c$BCBG11B[c$BCBG11B==9] <- NA
+c$BCBG11C[c$BCBG11C==9] <- NA
+c$BCBG11D[c$BCBG11D==9] <- NA
+c$BCBG11E[c$BCBG11E==9] <- NA
+c$BCBG11F[c$BCBG11F==9] <- NA
+c$BCBG11G[c$BCBG11G==9] <- NA
+c$BCBG11H[c$BCBG11H==9] <- NA
+c$BCBG12AA[c$BCBG12AA==9] <- NA
+c$BCBG12AB[c$BCBG12AB==9] <- NA
+c$BCBG05A[c$BCBG05A==9] <- NA
+c$BCBG09BB[c$BCBG09BB==9] <- NA
+c$BCBG09BC[c$BCBG09BC==9] <- NA
+c$BCBG09BF[c$BCBG09BF==9] <- NA
+c$BCBG09BD[c$BCBG09BD==9] <- NA
+c$BCBG09BE[c$BCBG09BE==9] <- NA
+```
+
+
+# slim variable
+
+```{r}
+c=c %>%
+  mutate( sclim= (BCBG11A+BCBG11B+BCBG11C+BCBG11D+BCBG11E+BCBG11F+BCBG11G+BCBG11H)/8)
+head(c)
+```
+
+```{r}
+c$sclim <- as.numeric(as.character(c$sclim))
+```
+  
+```{r}
+c$sclim<-cut(c$sclim, br = c(0, 2.5, 9999), label = c("1", "0"))
+```
+        
+```{r}
+head(c)
+```
+        
+# Creating variable ga
+
+```{r}
+c=c %>%
+  mutate( ga= BCBG12AA + BCBG12AB)
+head(c)
+```
+
+```{r}
+
+c$ga<-cut(c$ga, br = c(0, 4.99999, 5, 9999), labels = c("1","0", "0"))
+head(c)
+```
+
+#Creating Variable sloc
+
+```{r}
+c=c %>%
+  mutate(sloc= BCBG05A)
+head(c)
+```
+
+```{r}
+c$sloc<-cut(c$sloc, br = c(0,3.5, 9999), labels = c("1","0"))
+head(c)
+```
+
+# Creating Variable sre
+
+```{r}
+c=c %>%
+  mutate(sre=(BCBG09BB + BCBG09BC + BCBG09BF + BCBG09BD + BCBG09BE)/5)
+head(c)
+```
+
+```{r}
+c$sre<-cut(c$sre, br = c(0,2, 9999), labels = c("1","0"))
+head(c)
+```
+
+# Selecting Useful Variables and Deleting Missing Values from Student dataset d
+
+```{r}
+head(d)
+```
+
+```{r}
+df=d %>%
+  select( IDCNTRY, IDSCHOOL, IDCLASS, IDSTUD, IDGRADE, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, STUDWGT, msc, atm, vm, ses, sex )
+head(df)
+View(df)
+```
+
+```{r}
+df <- df[!is.na(df$msc), ]
+df <- df[!is.na(df$atm), ]
+df <- df[!is.na(df$vm), ]
+df <- df[!is.na(df$ses), ]
+df <- df[!is.na(df$sex), ]
+View(df)
+```
+          
