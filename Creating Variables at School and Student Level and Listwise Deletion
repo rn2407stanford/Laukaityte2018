@@ -38,7 +38,8 @@ library(ggplot2)
 library(writexl)
 library(openxlsx)
 library("readxl")
-
+library("mice")
+library("jomo")
 ```
 
 
@@ -377,8 +378,9 @@ head(d)
 df=d %>%
   select( IDCNTRY, IDSCHOOL, IDCLASS, IDSTUD, IDGRADE, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, STUDWGT, msc, atm, vm, ses, sex )
 head(df)
-View(df)
 ```
+
+# Listwise deletion of 1st level(student level) variables
 
 ```{r}
 df <- df[!is.na(df$msc), ]
@@ -386,6 +388,42 @@ df <- df[!is.na(df$atm), ]
 df <- df[!is.na(df$vm), ]
 df <- df[!is.na(df$ses), ]
 df <- df[!is.na(df$sex), ]
-View(df)
 ```
-          
+
+```{r}
+help(mutilevel)
+```
+
+#Multiple Imputation of 2nd level (school level variables)
+
+First, I will select only some variables that I need then will make sclim, ga, sloc, and sre variables factor 
+
+```{r}
+imput_c=c %>%
+  select(IDSCHOOL, SCHWGT, STOTWGTU, sclim, ga, sloc, sre)
+imput_c$sclim=as.factor(imput_c$sclim)
+imput_c$ga=as.factor(imput_c$ga)
+imput_c$sloc=as.factor(imput_c$sloc)
+imput_c$sre=as.factor(imput_c$sre)
+```
+
+```{r}
+imput_mc <- mice(imput_c, seed=1992)
+```
+
+```{r}
+summary(imput_mc)
+```
+
+
+```{r}
+imput_mc$imp$sclim
+```
+
+
+```{r}
+imput_mc = complete(imput_mc,1)
+head(imput_mc)
+```
+
+THIS WORKS BUT DOES NOT CONSIDER THE CLUSTERING EFFECT.
