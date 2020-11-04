@@ -1,10 +1,13 @@
 ---
-title: "Laukaityte"
-author: "Roza"
+title: "Analysis of the paper"
+author: "Roza Nalbandyan"
 date: "10/20/2020"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ```{r}
 library(foreign) # for reading spss formatted data
@@ -16,17 +19,11 @@ library(writexl)
 library(openxlsx)
 library("readxl")
 library("mice")
-library("jomo")
 ```
 
 
 ```{r}
 d = read.spss("STSDATA1.sav", to.data.frame=T)
-```
-
-
-```{r}
-head(d)
 ```
 
 # Make ommited variables which are numbered as 9 as NA
@@ -48,20 +45,11 @@ d$BSBG05A[d$BSBG05A==9] <- NA
 d$BSBG05B[d$BSBG05B==9] <- NA
 ```
 
+# MODIFYING VARIABLES
 
-```{r}
-head(d)
-```
+## creating "mcs" variable
 
-
-
-# creating mcs
-
-```{r}
-d %>%
-  select(BSBM16A, BSBM16B, BSBM16C, BSBM16D)
-```
-
+reverse code BSBM16C variable
 ```{r}
 d=d %>% mutate (BSBM16C=recode(BSBM16C,
                        `1`="4",
@@ -70,6 +58,7 @@ d=d %>% mutate (BSBM16C=recode(BSBM16C,
                        `4`="1"))
 ```
 
+reverse code BSBM16B variable
 ```{r}
 d=d %>% mutate (BSBM16B=recode(BSBM16B,
                        `1`="4",
@@ -78,54 +67,24 @@ d=d %>% mutate (BSBM16B=recode(BSBM16B,
                        `4`="1"))
 ```
 
-```{r}
-d %>%
-  select(BSBM16A, BSBM16D, BSBM16B, BSBM16C)
-```
+converting these two variables into numeric
 
 ```{r}
-d %>%
-  select(BSBM16A, BSBM16B, BSBM16C, BSBM16D)
+d$BSBM16B <- as.numeric(d$BSBM16B)
+d$BSBM16C <- as.numeric(d$BSBM16C)
 ```
 
-```{r}
-d$BSBM16B <- as.numeric(as.character(d$BSBM16B))
-d$BSBM16C <- as.numeric(as.character(d$BSBM16C))
-```
-
-
-```{r}
-d %>%
-  select(BSBM16A, BSBM16B, BSBM16C, BSBM16D)
-```
+creating "msc" variable 
 
 ```{r}
 d=d %>%
   mutate( msc = (BSBM16A + BSBM16D + BSBM16B +BSBM16C)/4)
-```
-
-```{r}
-head(d)
-```
-
-```{r}
-d %>%
-select(msc)
-```
-```{r}
 d$msc<-cut(d$msc, br = c(0, 2.5, 9999), labels = c("1","0"))
 ```
 
-```{r}
-d %>%
-  select(msc)
-```
-# creating atm variable
+## creating "atm" variable
 
-```{r}
-d %>%
-  select(BSBM14A, BSBM14C, BSBM14E)
-```
+reverse code BSBM14C variable
 
 ```{r}
 d=d %>% mutate (BSBM14C=recode(BSBM16C,
@@ -133,112 +92,51 @@ d=d %>% mutate (BSBM14C=recode(BSBM16C,
                        `2`="3",
                        `3`="2",
                        `4`="1"))
+d$BSBM14C <- as.numeric(d$BSBM14C)
 ```
 
-
-```{r}
-d %>%
-  select(BSBM14A, BSBM14C, BSBM14E)
-```
-```{r}
-d$BSBM14C <- as.numeric(as.character(d$BSBM14C))
-```
+create atm variable
 
 ```{r}
 d=d %>%
   mutate( atm = (BSBM14A + BSBM14C + BSBM14E)/3)
-```
-
-````{r}
-head(d)
-```
-```{r}
 d$atm<-cut(d$atm, br = c(0, 2.5, 9999), labels = c("1","0"))
-head(d)
 ```
 
-# creating vm variable
+## creating "vm" variable
 
 ```{r}
 d=d %>%
   mutate( vm = (BSBM16J + BSBM16K + BSBM16L + BSBM16M)/4)
-head(d)
-```
-
-```{r}
 d$vm<-cut(d$vm, br = c(0, 2.5, 9999), labels = c("1","0"))
-head(d)
 ```
 
-# creating variable ses
+## creating variable "ses"
 
 ```{r}
 d$BSBG04<-cut(d$BSBG04, br = c(0, 2, 4, 5), labels = c("1","2","3"))
-```
-
-```{r}
-head(d)
-```
-```{r}
-d$BSBG04 <- as.numeric(as.character(d$BSBG04))
-```
-
-```{r}
-d %>%
-  select(BSBG05A, BSBG05B)
+d$BSBG04 <- as.numeric(d$BSBG04)
 ```
 
 ```{r}
 d=d %>%
   mutate(ses0=BSBG05A + BSBG05B)
-```
-
-```{r}
-d %>%
-  select(ses0)
-```
-
-
-```{r}
-d$ses0 <- as.numeric(as.character(d$ses0))
-```
-
-```{r}
-d %>%
-  select(ses0)
+d$ses0 <- as.numeric(d$ses0)
 ```
 
 ```{r}
 d$ses0<-cut(d$ses0, br = c(0, 1.99999,2,5), labels = c("0","1", "1"))
-head(d)
+d$ses0 <- as.numeric(d$ses0)
 ```
-
-```{r}
-d$ses0 <- as.numeric(as.character(d$ses0))
-```
-`
- Excel command #write_xlsx(d,"~/Desktop\\VXQ3.xlsx")
 
 ```{r}
 d=d %>%
   mutate( ses=(ses0+BSBG04)/2)
-```
-
-```{r}
-  head(d)
-```
-
-```{r}
 d$ses<-cut(d$ses, br = c(0, 1.99999,2, 5), labels = c("0","1","1"))
-  head(d)
+d$ses <- as.factor(d$ses)
 ```
 
-```{r}
-d$ses <- as.numeric(as.character(d$ses))
-head(d)
-```
-
-#Variable Sex
+## creating variable Sex
 
 ```{r}
 d=d %>%
@@ -246,21 +144,18 @@ d=d %>%
 ```
 
 ```{r}
-d=d %>% mutate(sex=recode(sex,
-                          `1`="0",
-                          `2`="1"))
+d=d %>%
+  mutate(sex=recode(sex,
+                      `1`="0",
+                      `2`="1"))
+d$sex <- as.factor(d$sex)
 ```
 
-
-```{r}
-head(d)
-```
 
 SCHOOL LEVEL VARIABLES
 
 ```{r}
 c <- read_excel("SchoolQstMerged.xlsx")
-head(c)
 ```
 
 # Make ommited variables which are numbered as 9 as NA
@@ -284,25 +179,13 @@ c$BCBG09BD[c$BCBG09BD==9] <- NA
 c$BCBG09BE[c$BCBG09BE==9] <- NA
 ```
 
-
-# slim variable
+# create slim variable
 
 ```{r}
 c=c %>%
   mutate( sclim= (BCBG11A+BCBG11B+BCBG11C+BCBG11D+BCBG11E+BCBG11F+BCBG11G+BCBG11H)/8)
-head(c)
-```
-
-```{r}
 c$sclim <- as.numeric(as.character(c$sclim))
-```
-  
-```{r}
 c$sclim<-cut(c$sclim, br = c(0, 2.5, 9999), label = c("1", "0"))
-```
-        
-```{r}
-head(c)
 ```
         
 # Creating variable ga
@@ -310,13 +193,7 @@ head(c)
 ```{r}
 c=c %>%
   mutate( ga= BCBG12AA + BCBG12AB)
-head(c)
-```
-
-```{r}
-
 c$ga<-cut(c$ga, br = c(0, 4.99999, 5, 9999), labels = c("1","0", "0"))
-head(c)
 ```
 
 #Creating Variable sloc
@@ -324,12 +201,7 @@ head(c)
 ```{r}
 c=c %>%
   mutate(sloc= BCBG05A)
-head(c)
-```
-
-```{r}
 c$sloc<-cut(c$sloc, br = c(0,3.5, 9999), labels = c("1","0"))
-head(c)
 ```
 
 # Creating Variable sre
@@ -337,24 +209,14 @@ head(c)
 ```{r}
 c=c %>%
   mutate(sre=(BCBG09BB + BCBG09BC + BCBG09BF + BCBG09BD + BCBG09BE)/5)
-head(c)
-```
-
-```{r}
 c$sre<-cut(c$sre, br = c(0,2, 9999), labels = c("1","0"))
-head(c)
 ```
 
 # Selecting Useful Variables and Deleting Missing Values from Student dataset d
 
 ```{r}
-head(d)
-```
-
-```{r}
 df=d %>%
   select( IDCNTRY, IDSCHOOL, IDCLASS, IDSTUD, IDGRADE, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, STUDWGT, msc, atm, vm, ses, sex )
-head(df)
 ```
 
 # Listwise deletion of 1st level(student level) variables
@@ -367,21 +229,13 @@ df <- df[!is.na(df$ses), ]
 df <- df[!is.na(df$sex), ]
 ```
 
-```{r}
-help(mutilevel)
-```
-
 #Multiple Imputation of 2nd level (school level variables)
 
-First, I will select only some variables that I need then will make sclim, ga, sloc, and sre variables factor 
+First, I will select only some variables that I need then will make sclim, ga, sloc, and sre variables as factor 
 
 ```{r}
 imput_c=c %>%
   select(IDSCHOOL, SCHWGT, STOTWGTU, sclim, ga, sloc, sre)
-imput_c$sclim=as.factor(imput_c$sclim)
-imput_c$ga=as.factor(imput_c$ga)
-imput_c$sloc=as.factor(imput_c$sloc)
-imput_c$sre=as.factor(imput_c$sre)
 ```
 
 ```{r}
@@ -397,10 +251,9 @@ summary(imput_mc)
 imput_mc$imp$sclim
 ```
 
-
 ```{r}
 imput_mc = complete(imput_mc,1)
-head(imput_mc)
+View(imput_mc)
 ```
 
-THIS WORKS BUT DOES NOT CONSIDER THE CLUSTERING EFFECT.
+**THIS WORKS BUT DOES NOT CONSIDER THE CLUSTERING EFFECT.**
