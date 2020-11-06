@@ -224,8 +224,6 @@ df_MI$IDCNTRY <- as.character(df_MI$IDCNTRY)
 ```
 
 # MULTIPLE IMPUTATION
-  
-#create imputation odel for sclim variable
 
 ```{r}
 summary(df_MI)
@@ -234,6 +232,7 @@ summary(df_MI)
 ```{r}
 df_MI <- mice(df_MI, seed=1992)
 ```
+
 
 ```{r}
 summary(df_MI)
@@ -245,10 +244,13 @@ df_MI$imp$sclim
 
 ```{r}
 df_MI = complete(df_MI,1)
-View(df_MI)
 ```
 
+# Averaging outcome variable from 5 plausible values
 
-
-
+```{r}
+df_MI = df_MI %>%
+  mutate(Mathscore = (BSMMAT01 + BSMMAT02 + BSMMAT03 + BSMMAT04 + BSMMAT05)/5)
+View(df_MI)
+```
 
