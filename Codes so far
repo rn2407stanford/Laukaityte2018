@@ -10,22 +10,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-library(foreign) # for reading spss formatted data
 library(tidyr)
 library(dplyr)
-library(stringr) # useful for some string manipulation
-library(ggplot2)
 library(writexl)
-library(openxlsx)
 library("readxl")
 library("mice")
-library(lme4)
 ```
 
 # Download data from Desktop
 
 ```{r}
-d <- read_excel("MegedTotalData.xlsx")
+d <- read_excel("STSSCH2.xlsx")
 ```
 
 # Make ommited variables which are numbered as 9 as NA
@@ -206,7 +201,7 @@ d$sre<-cut(d$sre, br = c(0,2, 9999), labels = c("1","0"))
 # Listwise deletion of the 1st level(student level) variables
 
 ```{r}
-df=d
+df=d 
 df <- df[!is.na(df$msc), ]
 df <- df[!is.na(df$atm), ]
 df <- df[!is.na(df$vm), ]
@@ -218,9 +213,11 @@ df <- df[!is.na(df$sex), ]
 
 ```{r}
 df_MI=df %>%
-  select(IDSCHOOL, IDCNTRY, TOTWGT, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, STUDWGT, msc, atm, vm, ses, sex, sclim, ga, sloc, sre, BSMMAT01, BSMMAT02, BSMMAT03, BSMMAT04, BSMMAT05)
+  select(CNTSCH, IDSCHOOL, IDCNTRY, TOTWGT, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, msc, atm, vm, ses, sex, sclim, ga, sloc, sre, BSMMAT01, BSMMAT02, BSMMAT03, BSMMAT04, BSMMAT05)
+
 df_MI$IDSCHOOL <- as.character(df_MI$IDSCHOOL)
 df_MI$IDCNTRY <- as.character(df_MI$IDCNTRY)
+df_MI$CNTSCH <- as.character(df_MI$CNTSCH)
 ```
 
 # MULTIPLE IMPUTATION
@@ -253,4 +250,10 @@ df_MI = df_MI %>%
   mutate(Mathscore = (BSMMAT01 + BSMMAT02 + BSMMAT03 + BSMMAT04 + BSMMAT05)/5)
 View(df_MI)
 ```
+
+```{r}
+write_xlsx(d,"~/Desktop\\Part1.xlsx")
+```
+
+
 
