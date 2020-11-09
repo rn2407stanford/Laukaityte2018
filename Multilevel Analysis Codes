@@ -1,0 +1,281 @@
+---
+title: "Multilevel analysis"
+author: "Roza"
+date: "11/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(writexl)
+library("readxl")
+library("mice")
+library(lme4)
+```
+
+# Download data from Desktop
+
+```{r}
+sw <- read_excel("SWEDEN.xlsx")
+us <- read_excel("US.xlsx")
+```
+
+# SCALING studwgt, totalwgt, and schwgt
+
+## STUDWGT
+### Method 1 (STUDWGT)
+***********For Sweden
+```{r}
+sw = sw %>%
+  mutate(studwgt2=(studwgt*studwgt))
+sum(sw$studwgt)
+sum(sw$studwgt2)
+```
+
+```{r}
+sw = sw %>%
+  mutate( studwgt_scaled1 = (studwgt*11984.95)/34522.31)
+```
+
+***********For US
+```{r}
+us = us %>%
+  mutate(studwgt2=(studwgt*studwgt))
+sum(us$studwgt)
+sum(us$studwgt2)
+```
+
+```{r}
+us = us %>%
+  mutate( studwgt_scaled1 = (studwgt*105341.7)/1489837)
+```
+
+### Method 2 (STUDWGT)
+
+************ For Sweden
+```{r}
+n <- nrow(sw)
+sw$studwgt_scaled2 <- n * sw$studwgt / sum(sw$studwgt)
+```
+
+************ For US
+```{r}
+n <- nrow(us)
+us$studwgt_scaled2 <- n * us$studwgt / sum(us$studwgt)
+```
+
+## TOTWGT
+
+### Method 1 (TOTWGT)
+
+**********For Sweden
+```{r}
+sw = sw %>%
+  mutate(TOTWGT2=(TOTWGT*TOTWGT))
+sum(sw$TOTWGT)
+sum(sw$TOTWGT2)
+```
+
+```{r}
+sw = sw %>%
+  mutate( TOTWGT_scaled1 = (TOTWGT*86172.37)/1710359)
+```
+
+
+**********For US
+```{r}
+us = us %>%
+  mutate(TOTWGT2=(TOTWGT*TOTWGT))
+sum(us$TOTWGT)
+sum(us$TOTWGT2)
+```
+
+```{r}
+us = us %>%
+  mutate( TOTWGT_scaled1 = (TOTWGT*3137924)/1176021062)
+```
+
+### Method 2 (TOTWGT)
+
+***********for Sweden
+
+```{r}
+n <- nrow(sw)
+sw$TOTWGT_scaled2 <- n * sw$TOTWGT / sum(sw$TOTWGT)
+```
+
+**********for US
+
+```{r}
+n <- nrow(us)
+us$TOTWGT_scaled2 <- n * us$TOTWGT / sum(us$TOTWGT)
+```
+
+## SCHWGT
+
+### Method 1 (SCHWGT)
+
+*********For Sweden
+
+```{r}
+sw = sw %>%
+  mutate(SCHWGT2=(SCHWGT*SCHWGT))
+sum(sw$SCHWGT)
+sum(sw$SCHWGT2)
+```
+
+```{r}
+sw = sw %>%
+  mutate( SCHWGT_scaled1 = (SCHWGT*43478.59)/596153.6)
+```
+
+*********For US
+```{r}
+us = us %>%
+  mutate(SCHWGT2=(SCHWGT*SCHWGT))
+sum(us$SCHWGT)
+sum(us$SCHWGT2)
+```
+
+```{r}
+us = us %>%
+  mutate( SCHWGT_scaled1 = SCHWGT*542593.7/132576492)
+```
+
+### Method 2 (SCHWGT)
+
+************For Sweden
+
+```{r}
+n <- nrow(sw)
+sw$SCHWGT_scaled2 <- n * sw$SCHWGT / sum(sw$SCHWGT)
+```
+
+***********For US
+
+```{r}
+n <- nrow(us)
+us$SCHWGT_scaled2 <- n * us$SCHWGT / sum(us$SCHWGT)
+```
+
+# Download Packages for HLM
+```{r}
+library(lme4)
+library(merTools)
+library(lmerTest)
+```
+
+#MULTILEVEL ANALYSIS
+
+## NULL Model
+
+```{r}
+library(lme4)
+library(merTools)
+library(lmerTest)
+```
+
+### Unweighted Model
+
+**********For Sweden
+
+```{r}
+model1.1sw <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=sw)
+summary(model1)
+confint(model1)
+ICC(outcome= "Mathscore", group="CNTSCH", data=sw)
+```
+
+**********For US
+
+```{r}
+model1.1us <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=us)
+summary(model1)
+confint(model1)
+ICC(outcome= "Mathscore", group="CNTSCH", data=us)
+```
+
+
+---------------------------------------------------------------
+```{r}
+model1.2 <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=sw, weights = studwgt)
+ICC(outcome= "Mathscore", group="CNTSCH", data=us)
+summary(model1.2)
+```
+
+
+```{r}
+model1.2 <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=us, weights = studwgt_scaled2)
+confint(model1.2)
+summary(model1.2)
+ICC(outcome= "Mathscore", group="CNTSCH", data=us)
+```
+
+```{r}
+model1.3 <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=sw, weights = studwgt_scaled2)
+confint(model1.3)
+summary(model1.3)
+ICC(outcome= "Mathscore", group="CNTSCH", data=sw)
+```
+
+TOTWGT
+```{r}
+model1.4 <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=us, weights = TOTWGT_scaled2)
+confint(model1.4)
+summary(model1.4)
+ICC(outcome= "Mathscore", group="CNTSCH", data=us)
+```
+
+```{r}
+model1.4 <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=sw, weights = TOTWGT_scaled2)
+confint(model1.4)
+summary(model1.4)
+ICC(outcome= "Mathscore", group="CNTSCH", data=sw)
+```
+
+SCHWGT
+
+```{r}
+model1.4 <-lmer(Mathscore ~ 1+(1|CNTSCH), REML=FALSE, data=us, weights = SCHWGT_scaled2)
+confint(model1.4)
+summary(model1.4)
+ICC(outcome= "Mathscore", group="CNTSCH", data=us)
+```
+
+## STUDENT model
+
+### Unweighted
+
+******************** For Sweden
+
+```{r}
+model2.1sw <- lmer(Mathscore ~ 1 + msc + atm + vm + ses + sex + (1|CNTSCH), REML=FALSE, data=sw)
+summary(model2.1sw)
+```
+**************** For US
+
+```{r}
+model2.1us <- lmer(Mathscore ~ 1 + msc + atm + vm + ses + sex + (1|CNTSCH), REML=FALSE, data=us)
+summary(model2.1us)
+```
+
+##FULL Model
+
+### Unweighted
+
+**************For Sweden
+```{r}
+Model3.1sw <- lmer(Mathscore ~ 1 + msc + atm + vm + ses + sex + (1|CNTSCH) + sclim + ga + sloc + sre, REML = FALSE, data=sw)
+summary(Model3.1sw)
+```
+
+*********** For US
+```{r}
+Model3.1us <- lmer(Mathscore ~ 1 + msc + atm + vm + ses + sex + (1|CNTSCH) + sclim + ga + sloc + sre, REML = FALSE, data=us)
+summary(Model3.1us)
+```
