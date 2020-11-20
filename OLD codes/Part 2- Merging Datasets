@@ -1,0 +1,45 @@
+---
+title: "Merging Data"
+author: "Roza Nalbandyan"
+date: "11/2/2020"
+output: html_document
+---
+
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(stringr) # useful for some string manipulation
+library(writexl)
+library("readxl")
+```
+
+
+```{r}
+a1 <- read_excel("STSDATA.xlsx")
+a2 <- read_excel("SCHDATA.xlsx")
+View(a1)
+View(a2)
+```
+
+```{r}
+a1=a1 %>%
+  select(CNTSCH, IDSCHOOL, IDCNTRY, IDCLASS, IDSTUD, ITSEX, TOTWGT, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, BSBM16A, BSBM16C, BSBM16B, BSBM16D, BSBM14A, BSBM14C, BSBM14E, BSBM16J, BSBM16K, BSBM16L, BSBM16M, BSBG04, BSBG05A, BSBG05B, BSBG01, BSMMAT01, BSMMAT02, BSMMAT03, BSMMAT04, BSMMAT05)
+```
+         
+```{r}
+a2=a2%>%
+  select(CNTSCH, BCBG11A, BCBG11B, BCBG11C, BCBG11D, BCBG11E, BCBG11F, BCBG11G, BCBG11H, BCBG12AA, BCBG12AB, BCBG05A, BCBG09BB, BCBG09BC, BCBG09BF, BCBG09BD, BCBG09BE)
+```
+
+```{r}
+d = merge(a1, a2, by = "CNTSCH", all = TRUE)
+```
+
+```{r}
+View(d)
+```
+
+```{r}
+write_xlsx(d,"~/Desktop\\STSSCH.xlsx")
+```
