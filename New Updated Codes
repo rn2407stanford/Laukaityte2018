@@ -1,0 +1,1549 @@
+---
+title: "Reproduction of ‘’Importance of sampling weights in multilevel modeling of international large-scale assessment data’’ by Laukaityte, I. and Wiberg, M. (2018, Communications in Statistics-Theory and Methods, 47(20))"
+author: "Roza Nalbandyan (rn2407@stanford.edu)"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+---
+
+-------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+# Background
+
+The aim of the paper was to examine different approaches concerning handling weights in multilevel models when analyzing large-scale assessment "The Trends in International Mathematics and Science Study (TIMSS)" data. The authors examined real data from two countries (US and Sweden) on Mathemtaics achievement. Three types of two-level models were used in the empirical study; (a) NULL Model, (b) The STUDENT model- adding first/student level variables, (c) FULL model- adding second/school level variables. For each of these three models (a) no weights, (b) unscaled weights, (c) scaled weights, and (d) combination of no weights, scaled and unscaled weights were used. The results were compared and the conclusions and recommendations were made.
+The choice of the paper allowed me to build multilevel modeling in R, learn weighting process, and explore TIMSS data.
+
+## Original Data Description
+
+TIMSS is a large scale international assessment. The author took only mathematics achievement. A two-stage stratified cluster sample design is used in TIMSS, with schools at the first stage and intact classes (with all students in the class) at the second stage. The two-stage probability proportional to size sampling technique is used as the student sampling selection method. Thus, each student in the target population is chosen with unequal probability (Olson et al. 2008). 
+
+Sampling weights in the TIMSS study are calculated according to a three-step procedure involving selection probabilities for schools (the first stage), classrooms (the second stage), and students (the last, third stage) (Joncas 2007). The US sample contains 10,477 students’ data and Sweden sample contains 5,573 students’ data. 
+
+* Total student weight (totwgt) – sums to each national population. It is calculated from this formula
+
+**totwgtj,i = wgtfac1j,i · wgtfac2j,i · wgtfac3j,i · wgtadj1j,i · wgtadj2j,i · wgtadj3j,i**
+
+where wgtfac1, wgtfac2, and wgtfac3, which are the inverse probabilities of selection of the school, a classroom within the school, and the individual student within the classroom, respectively. The weighting adjustments wgtad j1, wgtad j2, and wgtad j3 are applied to the weighting factors to account for non participating schools, classes, and students, respectively.
+
+*  Student house weight (houwgt) – sums to the student sample size in each country,
+
+*  School weight (schwgt) – sums to the number of schools in a given country,
+
+*  Student weight (studwgt) is calculated by the author.
+
+# Procedure and Methods
+
+For the purpose of this course, I plan to do only the empirical study (omitting the simulation study). In order to do that I will 
+
+ (1) Download, Merge and clean the data for these two countries, 
+
+ (2) Recode, rename, rescale the data and create appropriate variable using the author guides (Laukayute, 2018, p. 4998). Ultimately, I had the first level "Math self-concept", "Attitude toward mathematics", "Valuing mathematics", "Socioeconomic status", and "Sex" variables; For the second level I had "School climate", "Good attendance", "School location" and "School resources" variables; For the cluster variable I had "School ID"; The dependent variable was composed of five plausible values which were imputations of mathematics score variable so I run my model for each plausible values and combined them using Rubin's Rule.
+
+ (3) Use Likewise Deletion for first (student) level variables, 
+
+ (4) Use Multiple Imputation for the second (school) level variables, 
+
+ (5) Calculate the Informativeness of weights, 
+
+ (6) Build ten Null Models with no weights, unscaled weights, scaled weithgs, and combination of weights in first and second level. Each of these model were calculated for 5 plausibel values and combined using Rubin's Rule for the dependent variable.
+
+ (7) Calculate Intraclass correlation for each model, 
+
+ (8) Calculate design effects, 
+
+ (9) Build 12 Student modelwith no weights, unscaled weights, scaled weights, and combination of weights in first and second level. Each of these model were calculated for 5 plausibel values and combined using Rubin's Rule for the dependent variable.
+
+ (10) Calculate Intraclass correlation for each Student model, 
+
+ (11) Build 12 Full Models with no weights, unscaled weights, scaled weithgs, and combination of weights in first and second level. Each of these model were calculated for 5 plausibel values and combined using Rubin's Rule for the dependent variable.
+
+ (12) Calculate Intraclass correlation for each Full model.
+
+
+### Differences from the Original Study
+
+The difference from the original study was because of the limitations of R software to run multilevel analysis. The author used Mplus because according to her it was "a complex analysis and there were no appropriate packages for R to run such a complex analysis" (personal communication, October 31, 2020). I used R for all the steps described above. In terms of multilevel model building at first I used "lme4" package. However, it had some limitation. Particularly, "lme4" did not provide an opportunity to include second level weights, more than one first level weights, as well as it did not allow to calculate the scaled weights appropriately and did not allow to use Rubin's rule for combining models for each 5 plausible values. Hence, I moved with "BIFIEsurvey" package. Even though this package also had many limitations, for example, it did not allow to include three first level weights, and allows to include only partial two level weights. 
+
+Additionally it was not possible to run FIML in R for multilevel modeling, so I decided to run Multiple Imputations with MICE package (without considering clustering effect) in order to impute second/school level data. The reason, I did not consider the clustering effect was because the MICE package cannot build clustered data for multilevel modeling for factor variables. Since my variables were factor variable and not continuous I decided to not consider the clustering. It definitely had impact on my results, for example, on the variance. Because of the time limitations I was not able to find other package that considers clustering effect for second level factor variables.
+
+Finally, the integration of weights are very limited in this "BIFIEsurvey" package; hence, the results were a little biased.
+
+### Challenges
+
+There were several challenges in the process of reproducing the paper. First, I knew very little about multilevel modeling and how to do it with programming languages (e.g. in R) so I had to spend a lot of time trying to understand different terms, watched many YOUTUBE videos, and read various papers about Multilevel analysis. In addition, the TIMSS dataset is a huge and complex. I cleaned, corrected and recoded about 7 times until I built the final codes. I also needed to observe this complicated assessment structure, jackknife types, zones, and complex sampling. I needed to learn how to find Intraclass correlation and what is the meaning of it, weight data and include in three models, calculate design effect and informativeness. I have never done any of them so it took an hours and hours of time commitment and was really challenging. Sometimes, I got very stressed from my inability to understand the terms but due to Tobi's and Julie's patience as well as my statistician friends I was able to make sense of the data.
+
+### Links
+
+* Please See the Repo [HERE](https://github.com/rn2407stanford/Laukaityte2018.git)
+https://github.com/rn2407stanford/Laukaityte2018.git
+
+* Please See the Original Paper [HERE](https://github.com/rn2407stanford/Laukaityte2018/blob/main/Original%20Paper.pdf)
+https://github.com/rn2407stanford/Laukaityte2018/blob/main/Original%20Paper.pdf
+
+
+# Analysis and Data Transformation
+
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(writexl)
+library("readxl")
+```
+
+*****************************
+Student level
+*****************************
+
+```{r}
+Data <- read_excel("BSG.xlsx") #Student level data for Sweden and USA
+```
+
+Selecting the variables that I am going to use to make the dataset neater
+
+```{r}
+Data = Data %>%
+  select(IDCNTRY, IDSCHOOL, IDCLASS, IDSTUD, ITSEX,TOTWGT, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, BSBM16A,BSBM16B, BSBM16C, BSBM16D, BSBM16J, BSBM16K, BSBM16L, BSBM16M, BSBM14A, BSBM14C, BSBM14E, BSBG04, BSBG05A, BSBG05B, BSBG01, BSMMAT01, BSMMAT02, BSMMAT03, BSMMAT04, BSMMAT05)
+```
+
+First, I am going to make an analysis for Sweden and then focus on US. Hence, I am specifying subset first for Sweden after running the analysis I am putting # mark in front of Sweden and then running all over again for US.
+
+```{r}
+#ndata <- subset(Data, Data$IDCNTRY==752) #for Sweden
+
+ndata<-subset(Data, Data$IDCNTRY==840) #for USA
+#---------------------
+
+# Deleting Omited data as did the author
+ndata <- na.omit(ndata)
+n<-length(ndata$IDSCHOOL) #for specifying the number of students
+```
+
+In the dataset 9 and NA are for ommited data, so I want to make them the same in order to delete later.
+
+```{r}
+?ifelse
+for(i in 1:n){
+ifelse(ndata$BSBM14A[i]==9, ndata$BSBM14A[i]<-NA, ndata$BSBM14A[i]<-ndata$BSBM14A[i])
+ifelse(ndata$BSBM14C[i]==9, ndata$BSBM14C[i]<-NA, ndata$BSBM14C[i]<-ndata$BSBM14C[i])
+ifelse(ndata$BSBM14E[i]==9, ndata$BSBM14E[i]<-NA, ndata$BSBM14E[i]<-ndata$BSBM14E[i])
+}
+for(i in 1:n){
+ifelse(ndata$BSBG04[i]==9, ndata$BSBG04[i]<-NA, ndata$BSBG04[i]<-ndata$BSBG04[i])
+ifelse(ndata$BSBG05A[i]==9, ndata$BSBG05A[i]<-NA, ndata$BSBG05A[i]<-ndata$BSBG05A[i])
+ifelse(ndata$BSBG05B[i]==9, ndata$BSBG05B[i]<-NA, ndata$BSBG05B[i]<-ndata$BSBG05B[i])
+}
+
+for(i in 1:n){
+ifelse(ndata$BSBM16A[i]==9, ndata$BSBM16A[i]<-NA, ndata$BSBM16A[i]<-ndata$BSBM16A[i])
+ifelse(ndata$BSBM16B[i]==9, ndata$BSBM16B[i]<-NA, ndata$BSBM16B[i]<-ndata$BSBM16B[i])
+ifelse(ndata$BSBM16C[i]==9, ndata$BSBM16C[i]<-NA, ndata$BSBM16C[i]<-ndata$BSBM16C[i])
+ifelse(ndata$BSBM16D[i]==9, ndata$BSBM16D[i]<-NA, ndata$BSBM16D[i]<-ndata$BSBM16D[i])
+}
+
+for(i in 1:n){
+ifelse(ndata$BSBM16J[i]==9, ndata$BSBM16J[i]<-NA, ndata$BSBM16J[i]<-ndata$BSBM16J[i])
+ifelse(ndata$BSBM16K[i]==9, ndata$BSBM16K[i]<-NA, ndata$BSBM16K[i]<-ndata$BSBM16K[i])
+ifelse(ndata$BSBM16L[i]==9, ndata$BSBM16L[i]<-NA, ndata$BSBM16L[i]<-ndata$BSBM16L[i])
+ifelse(ndata$BSBM16M[i]==9, ndata$BSBM16M[i]<-NA, ndata$BSBM16M[i]<-ndata$BSBM16M[i])
+}
+
+ndata <- na.omit(ndata)
+```
+
+
+```{r}
+n<-length(ndata$IDSCHOOL)
+```
+
+TRANSFORMING THE FIRST(STUDENT) LEVEL VARIABLES
+
+***Creating "Math selth-concept" variables based on TIMSS original variables
+
+```{r}
+# Reverese Code BSBM16C and BSBM16B variables
+
+for(i in 1:n){
+if(ndata$BSBM16C[i]==1) ndata$BSBM16C[i]<-4
+else if(ndata$BSBM16C[i]==2) ndata$BSBM16C[i]<-3
+else if(ndata$BSBM16C[i]==3) ndata$BSBM16C[i]<-2
+else ndata$BSBM16C[i]<-1
+}
+
+for(i in 1:n){
+if(ndata$BSBM16B[i]==1) ndata$BSBM16B[i]<-4
+else if(ndata$BSBM16B[i]==2) ndata$BSBM16B[i]<-3
+else if(ndata$BSBM16B[i]==3) ndata$BSBM16B[i]<-2
+else ndata$BSBM16B[i]<-1
+}
+```
+
+
+```{r}
+# Find the Average
+mscav<-(ndata$BSBM16A + ndata$BSBM16C + ndata$BSBM16D + ndata$BSBM16B)/4
+```
+
+```{r}
+# Rescale the Variable
+msc<-rep(NA, n)
+for(i in 1:n){
+if(mscav[i]<=2.5) msc[i]<-1 #High
+else if(mscav[i]>2.5) msc[i]<-0 #Low
+}
+```
+
+*** Creating "Attitude towards mathematics" variable
+
+```{r}
+# Reverse code the BSBM14C variable
+for(i in 1:n){
+if(ndata$BSBM14C[i]==1) ndata$BSBM14C[i]<-4
+else if(ndata$BSBM14C[i]==2) ndata$BSBM14C[i]<-3
+else if(ndata$BSBM14C[i]==3) ndata$BSBM14C[i]<-2
+else ndata$BSBM14C[i]<-1
+}
+```
+
+```{r}
+# Average the three variables
+attav<-(ndata$BSBM14A + ndata$BSBM14C + ndata$BSBM14E)/3
+```
+
+
+```{r}
+# Rescale the avregaed variable
+atm<-rep(NA, n)
+for(i in 1:n){
+if(attav[i]<=2.5) atm[i]<-1
+else if(attav[i]>2.5) atm[i]<-0
+}
+```
+
+***** Creating "Valuing mathematics" Variable
+
+```{r}
+# Average the variables
+valav<-(ndata$BSBM16J + ndata$BSBM16K + ndata$BSBM16L + ndata$BSBM16M)/4
+```
+
+
+```{r}
+# Rescale the variable
+vm<-rep(NA, n)
+for(i in 1:n){
+if(valav[i]<=2.5) vm[i]<-1
+else if(valav[i]>2.5) vm[i]<-0
+}
+```
+
+*** Creating SES Variable
+
+```{r}
+# Recode Number of Books at Home variable
+book<-rep(NA, n)
+for(i in 1:n){
+if(ndata$BSBG04[i]==1 | ndata$BSBG04[i]==2) book[i]<-1
+else if(ndata$BSBG04[i]==3 | ndata$BSBG04[i]==4) book[i]<-2
+else book[i]<-3
+}
+```
+
+```{r}
+#Computer & Study desk
+for(i in 1:n){
+ndata$BSBG05A[i]<-ifelse(ndata$BSBG05A[i]==1,1,0)
+ndata$BSBG05B[i]<-ifelse(ndata$BSBG05B[i]==1,1,0)
+}
+```
+
+
+```{r}
+# Sum two variables
+hedusum<-ndata$BSBG05A+ndata$BSBG05B
+```
+
+```{r}
+# REscale the variable
+
+hedu<-rep(NA, n)
+for(i in 1:n){
+if(hedusum[i] <=1) hedu[i]<-1
+else if(hedusum[i]==2) hedu[i]<-2
+}
+```
+
+```{r}
+# Average the two variables
+
+sesav<-(book+hedu)/2
+```
+
+```{r}
+# Rescale the SES variable
+
+ses<-rep(NA, n)
+for(i in 1:n){
+if(sesav[i]<2) ses[i]<-0
+else if(sesav[i]>=2) ses[i]<-1
+}
+```
+
+*******Aggregated Student level factors
+
+```{r}
+k<-length(unique(ndata$IDSCHOOL))
+k1<-unique(ndata$IDSCHOOL)
+
+masca<-rep(NA,k)
+for(i in 1:k){
+masca[k1[i]]<-mean(msc[ndata$IDSCHOOL==k1[i]])
+}
+
+mascav<-rep(NA,n)
+for(i in 1:n){
+mascav[i]<-masca[ndata$IDSCHOOL[i]]
+}
+
+attmaa<-rep(NA,k)
+for(i in 1:k){
+attmaa[k1[i]]<-mean(atm[ndata$IDSCHOOL==k1[i]])
+}
+
+attmav<-rep(NA,n)
+for(i in 1:n){
+attmav[i]<-attmaa[ndata$IDSCHOOL[i]]
+}
+
+valmaa<-rep(NA,k)
+for(i in 1:k){
+valmaa[k1[i]]<-mean(vm[ndata$IDSCHOOL==k1[i]])
+}
+
+valmav<-rep(NA,n)
+for(i in 1:n){
+valmav[i]<-valmaa[ndata$IDSCHOOL[i]]
+}
+
+sesa<-rep(NA,k)
+for(i in 1:k){
+sesa[k1[i]]<-mean(ses[ndata$IDSCHOOL==k1[i]])
+}
+
+sesav<-rep(NA,n)
+for(i in 1:n){
+sesav[i]<-sesa[ndata$IDSCHOOL[i]]
+}
+```
+
+
+```{r}
+#Recalculated student weight (without weights for selecting a school)
+studwgt<-ndata$WGTADJ2*ndata$WGTFAC2*ndata$WGTADJ3*ndata$WGTFAC3
+```
+
+
+In order to make the process easier for me I will create and download a new file only with student level factors, weights and Plausible Values for Sweden. Then I will rerun the above same exact codes for US and will put # sign in front of the Sweden values and v=create similar file for US.
+
+ A new file only with student level factors, weights and Plausible Values for USA
+
+```{r}
+# datase<-data.frame(IDCNTRY=ndata$IDCNTRY, IDSCHOOL=ndata$IDSCHOOL, IDCLASS=ndata$IDCLASS, IDSTUD=ndata$IDSTUD, sex=ndata$ITSEX, msc, atm, vm, ses, mascav, attmav, valmav, sesav, TOTWGT=ndata$TOTWGT, HOUWGT=ndata$HOUWGT, SENWGT=ndata$SENWGT, studwgt, BSMMAT01=ndata$BSMMAT01, BSMMAT02=ndata$BSMMAT02, BSMMAT03=ndata$BSMMAT03, BSMMAT04=ndata$BSMMAT04, BSMMAT05=ndata$BSMMAT05)
+```
+
+```{r}
+# write_xlsx(datase, "Timss2011_SWstud_1401.xlsx")
+```
+
+
+A new file only with student level factors, weights and Plausible Values for USA
+
+```{r}
+datausa<-data.frame(IDCNTRY=ndata$IDCNTRY, IDSCHOOL=ndata$IDSCHOOL, IDCLASS=ndata$IDCLASS, IDSTUD=ndata$IDSTUD, sex=ndata$ITSEX, msc, atm, vm, ses, mascav, attmav, valmav, sesav, TOTWGT=ndata$TOTWGT, HOUWGT=ndata$HOUWGT, SENWGT=ndata$SENWGT, studwgt, BSMMAT01=ndata$BSMMAT01, BSMMAT02=ndata$BSMMAT02, BSMMAT03=ndata$BSMMAT03, BSMMAT04=ndata$BSMMAT04, BSMMAT05=ndata$BSMMAT05)
+```
+
+```{r}
+ write_xlsx(datausa, "Timss2011_USAstud_1401.xlsx")
+```
+
+
+
+*************************
+Second/School level
+*************************
+
+Up to now we were transforming the school/first level variables at first for Sweden, then for US. Now we are working on School/second level variables and creating the variables that the author used.
+
+download School/Second Level/Principal Level data
+
+```{r}
+Datap<- read_excel("BCG.xlsx") #Principal level data for Sweden and USA
+```
+
+ We will first transform the School variables for Sweden, then we will work on US data (after only changing # sign). I am doing this in order to make my work easier and not confusing later on. 
+
+```{r}
+ #datap<-subset(Datap, Datap$IDCNTRY==752) #for Sweden
+#---For USA----------
+datap<-subset(Datap, Datap$IDCNTRY==840) #for USA
+# datap$IDSTRATE <-NULL
+# datap$IDSTRATI <-NULL
+#---------------------
+
+n<-length(datap$IDSCHOOL)
+```
+
+
+******* Creating School climate Variable
+
+```{r}
+# Make NA and 9 as the same ( both of them are omitted variables)
+
+for(i in 1:n){
+datap$BCBG11A[i]<-ifelse(datap$BCBG11A[i]==9, NA, datap$BCBG11A[i])
+datap$BCBG11B[i]<-ifelse(datap$BCBG11B[i]==9, NA, datap$BCBG11B[i])
+datap$BCBG11C[i]<-ifelse(datap$BCBG11C[i]==9, NA, datap$BCBG11C[i])
+datap$BCBG11D[i]<-ifelse(datap$BCBG11D[i]==9, NA, datap$BCBG11D[i])
+datap$BCBG11E[i]<-ifelse(datap$BCBG11E[i]==9, NA, datap$BCBG11E[i])
+datap$BCBG11F[i]<-ifelse(datap$BCBG11F[i]==9, NA, datap$BCBG11F[i])
+datap$BCBG11G[i]<-ifelse(datap$BCBG11G[i]==9, NA, datap$BCBG11G[i])
+datap$BCBG11H[i]<-ifelse(datap$BCBG11H[i]==9, NA, datap$BCBG11H[i])
+}
+```
+
+Average the variables for school climate
+```{r}
+sclimav<-(datap$BCBG11A+datap$BCBG11B+datap$BCBG11C+datap$BCBG11D+datap$BCBG11E+datap$BCBG11F+datap$BCBG11G+datap$BCBG11H)/8
+```
+
+Rescale the variable
+```{r}
+sclimat<-rep(NA, n)
+for(i in 1:n){
+if(is.na(sclimav[i])) sclimat[i] <-NA
+else if(sclimav[i]<=2.5) sclimat[i]<-1
+else sclimat[i]<-0
+}
+```
+
+**** Creating "Good Attendance" and "School location" Variables
+
+Make NA and 9 as the same
+```{r}
+for(i in 1:n){
+datap$BCBG12AA[i]<-ifelse(datap$BCBG12AA[i]==9, NA, datap$BCBG12AA[i])
+datap$BCBG12AB[i]<-ifelse(datap$BCBG12AB[i]==9, NA, datap$BCBG12AB[i])
+datap$BCBG05A[i]<-ifelse(datap$BCBG05A[i]==9, NA, datap$BCBG05A[i]) #school location
+}
+```
+
+***Good attendance Variable
+
+Sum the two BCBG12AA and BCBG12AB variables
+```{r}
+sums<-(datap$BCBG12AA+datap$BCBG12AB)
+```
+
+Rescale the variable
+
+```{r}
+gatten<-rep(NA, n)
+for(i in 1:n){
+if(!is.na(sums[i]) & sums[i]<5) gatten[i]<-1
+else if(!is.na(sums[i]) & sums[i]>=5) gatten[i]<-0
+else if(is.na(sums[i])) gatten[i]<-NA
+}
+```
+
+****** Creating "School location" variable
+
+Rescale school location variable
+```{r}
+scloc<-rep(NA, n)
+for(i in 1:n){
+if(is.na(datap$BCBG05A[i])) scloc[i]<-NA
+else if(!is.na(datap$BCBG05A[i]) & datap$BCBG05A[i]<=3) scloc[i] <-1
+else scloc[i]<-0
+}
+```
+
+***** Creating "School resources" variable
+
+Make NA and 9 as the same
+```{r}
+for(i in 1:n){
+datap$BCBG09AA[i]<-ifelse(datap$BCBG09AA[i]==9, NA, datap$BCBG09AA[i])
+datap$BCBG09AB[i]<-ifelse(datap$BCBG09AB[i]==9, NA, datap$BCBG09AB[i])
+datap$BCBG09AC[i]<-ifelse(datap$BCBG09AC[i]==9, NA, datap$BCBG09AC[i])
+datap$BCBG09AD[i]<-ifelse(datap$BCBG09AD[i]==9, NA, datap$BCBG09AD[i])
+datap$BCBG09AE[i]<-ifelse(datap$BCBG09AE[i]==9, NA, datap$BCBG09AE[i])
+}
+```
+
+Average these variables
+```{r}
+screav<-(datap$BCBG09AA+datap$BCBG09AB+datap$BCBG09AC+datap$BCBG09AD+datap$BCBG09AE)/5
+```
+
+Rescale the variable
+```{r}
+scre<-rep(NA, n)
+for(i in 1:n){
+if(is.na(screav[i])) scre[i]<-NA
+else if(!is.na(screav[i]) & screav[i]<=2) scre[i] <-1
+else scre[i]<-0
+}
+```
+
+Transformed school level factors to merge together with the student level factors
+
+```{r}
+n<-length(ndata$IDSCHOOL)
+
+sclimats<-rep(NA,n)
+for(i in 1:n){
+sclimats[i]<-sclimat[datap$IDSCHOOL==ndata$IDSCHOOL[i]]
+}
+
+gattens<-rep(NA,n)
+for(i in 1:n){
+gattens[i]<-gatten[datap$IDSCHOOL==ndata$IDSCHOOL[i]]
+}
+
+sclocs<-rep(NA,n)
+for(i in 1:n){
+sclocs[i]<-scloc[datap$IDSCHOOL==ndata$IDSCHOOL[i]]
+}
+
+scres<-rep(NA,n)
+for(i in 1:n){
+scres[i]<-scre[datap$IDSCHOOL==ndata$IDSCHOOL[i]]
+}
+
+schwgt<-rep(NA,n) #school weight
+for(i in 1:n){
+schwgt[i]<-datap$SCHWGT[datap$IDSCHOOL==ndata$IDSCHOOL[i]]
+}
+
+stotwgtu<-rep(NA,n)
+for(i in 1:n){
+stotwgtu[i]<-datap$STOTWGTU[datap$IDSCHOOL==ndata$IDSCHOOL[i]]
+}
+```
+
+**** Creating A new file with the student and school level factors for Sweden to make my work less confusing
+
+```{r}
+#datasef<-data.frame(datase, sclimats, gattens, sclocs, scres, schwgt, stotwgtu)
+#write.csv(datasef, "Timss2011_SEall_1401.csv", row.names=FALSE)
+```
+
+A new file with the student and school level factors for USA
+
+```{r}
+datausaf<-data.frame(datausa, sclimats, gattens, sclocs, scres, schwgt, stotwgtu)
+write.csv(datausaf, "Timss2011_USAall_1401.csv", row.names=FALSE)
+```
+
+********************************
+****** Merging Sweden's and USA files
+********************************
+
+```{r}
+#datas - full data from SE
+datas<- read.csv(file = 'Timss2011_SEall_1401.csv')
+#datau - full data from USA
+datau <- read.csv(file='Timss2011_USAall_1401.csv')
+```
+
+***** Changing school id for Sweden because there are several school that had the same ID as the US school IDs. So we need to change in order not to avoid confusions and incorrect analysis.
+
+```{r}
+n<-length(datas$IDSCHOOL)
+for(i in 1:n){
+if(datas$IDSCHOOL[i]==1618) datas$IDSCHOOL[i]<-310
+else datas$IDSCHOOL[i] <- datas$IDSCHOOL[i]-400
+}
+```
+
+****Merging two tables with US and Sweden data
+
+```{r}
+data<-rbind(datas, datau)
+```
+
+```{r}
+#recode sex because I just noticed the sex is recoded in the paper
+n<-length(data$IDSCHOOL)
+for(i in 1:n){
+data$sex[i]<-ifelse(data$sex[i]==1,0,1)
+}
+```
+
+I will download just to be safe and keep the results for my records
+```{r}
+write.csv(data, "Timss2011_SE&USAall_1402.csv", row.names=FALSE)
+```
+
+
+****************************************************
+ MULTIPLE IMPUTATION for the second level variables
+****************************************************
+
+I will first summarize to explore the missing data
+
+```{r}
+summary(data)
+```
+ Add the Mice package for Multiple Imputation
+ 
+```{r}
+library("mice")
+```
+
+Do the imputations for the missing data. Since the only missing data are on the second level and we already deleted the first level missing data, we dont need to specify specific variables that we want to impute.
+
+```{r}
+data <- mice(data, seed=1992)
+```
+
+```{r}
+data$imp$sclimats
+```
+we will just take the first imputation.
+
+```{r}
+data = complete(data,1)
+```
+
+*** I will also average outcome variable from 5 plausible values just it might be helpful for lme4 package. 
+
+```{r}
+data = data %>%
+  mutate(Mathscore = (BSMMAT01 + BSMMAT02 + BSMMAT03 + BSMMAT04 + BSMMAT05)/5)
+```
+
+I am just downloading to make the process easier for me and for keeping track what I did.
+```{r}
+write.csv(data, "Part1.csv", row.names=FALSE)
+```
+
+
+I will again upload the Part1, in order not to confuse the data.
+```{r}
+df <- read_excel ("Part1.xlsx")
+```
+
+
+```{r}
+sw <- subset(df, data$IDCNTRY==752) #for Sweden
+us<-subset(df, data$IDCNTRY==840) #for USA
+```
+
+
+
+***************************************
+SCALING studwgt, totalwgt, and schwgt
+***************************************
+
+Now we need to scale Studwgt, TOTWGT, and schwgt weights based on the two formulas provided by the author for US and Sweden seperatelly
+
+
+* Scaling STUDWGT
+
+Scaling Method 1 for STUDWGT
+***********For Sweden
+
+```{r}
+sw=sw %>%
+  mutate( studwgt_scaled1 = (sw$studwgt*sum(sw$studwgt))/sum(sw$studwgt*sw$studwgt))
+```
+
+***********For US
+
+```{r}
+us=us %>%
+  mutate( studwgt_scaled1 = (us$studwgt*sum(us$studwgt))/sum(us$studwgt*us$studwgt))
+```
+
+
+Scaling Method 2 (STUDWGT)
+
+************ For Sweden
+```{r}
+n <- nrow(sw)
+sw$studwgt_scaled2 <- n * sw$studwgt / sum(sw$studwgt)
+```
+
+************ For US
+```{r}
+n <- nrow(us)
+us$studwgt_scaled2 <- n * us$studwgt / sum(us$studwgt)
+```
+
+*** Scaling TOTWGT
+
+*** Scaling Method 1 for TOTWGT`
+
+********** For Sweden
+```{r}
+sw=sw %>%
+  mutate( TOTWGT_scaled1 = (sw$TOTWGT*sum(sw$TOTWGT))/sum(sw$TOTWGT*sw$TOTWGT))
+```
+
+
+**********For US
+```{r}
+us=us %>%
+  mutate( TOTWGT_scaled1 = (us$TOTWGT*sum(us$TOTWGT))/sum(us$TOTWGT*us$TOTWGT))
+```
+
+
+*** Scaling Method 2 for TOTWGT
+
+***********for Sweden
+
+```{r}
+n <- nrow(sw)
+sw$TOTWGT_scaled2 <- n * sw$TOTWGT / sum(sw$TOTWGT)
+```
+
+**********for US
+
+```{r}
+n <- nrow(us)
+us$TOTWGT_scaled2 <- n * us$TOTWGT / sum(us$TOTWGT)
+```
+
+Scaling SCHWGT
+
+Scaling Method 1 for SCHWGT
+
+*********For Sweden
+
+```{r}
+sw=sw %>%
+  mutate( schwgt_scaled1 = (sw$schwgt*sum(sw$schwgt))/sum(sw$schwgt*sw$schwgt))
+```
+
+*********For US
+
+```{r}
+us=us %>%
+  mutate( schwgt_scaled1 = (us$schwgt*sum(us$schwgt))/sum(us$schwgt*us$schwgt))
+```
+
+
+Scaling Method 2 for SCHWGT
+
+************For Sweden
+
+```{r}
+n <- nrow(sw)
+sw$schwgt_scaled2 <- n * sw$schwgt / sum(sw$schwgt)
+```
+
+***********For US
+
+```{r}
+n <- nrow(us)
+us$schwgt_scaled2 <- n * us$schwgt / sum(us$schwgt)
+```
+
+Download Packages for HLM
+```{r}
+library(BIFIEsurvey)
+```
+
+
+**************************
+**MULTILEVEL ANALYSIS**
+**************************
+
+**NULL Model for SWEDEN**
+
+No Weights
+
+```{r}
+bdatsw1 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw1 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw1, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modsw1)
+```
+
+
+Studwgt (scaled)
+
+```{r}
+bdatsw2 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw2 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw2, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modsw2)
+```
+
+
+Studwgt (unscaled)
+
+```{r}
+bdatsw3 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw3 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw3, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "one")
+summary(modsw3)
+```
+
+TOTWGT(scaled)
+
+```{r}
+bdatsw4 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw4 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw4, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT_scaled2", wgtlevel2 = "one")
+summary(modsw4)
+```
+
+TOTWGT(unscaled)
+
+```{r}
+bdatsw5 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw5 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw5, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "one")
+summary(modsw5)
+```
+
+TOTWGT, studwgt (scaled)
+
+```{r}
+bdatsw6 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw6 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw6, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modsw6)
+```
+
+schwgt(scaled)
+
+```{r}
+bdatsw7 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw7 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw7, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "schwgt_scaled1")
+summary(modsw7)
+```
+
+studwgt, schwgt (both unscaled)
+
+```{r}
+bdatsw8 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw8 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw8, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt")
+summary(modsw8)
+```
+
+TOTWGT, schwgt (both unscaled)
+
+```{r}
+bdatsw9 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw9 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw9, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "schwgt")
+summary(modsw9)
+```
+
+studwgt(unscaled) and schwgt (scaled)
+
+```{r}
+bdatsw10 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw10 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw10, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt_scaled1")
+summary(modsw10)
+```
+
+TOTWGT(unscaled) and schwgt (scaled)
+
+```{r}
+bdatsw11 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw11 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw11, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "schwgt_scaled1")
+summary(modsw11)
+```
+
+TOTWGT, studwgt, and schwgt (both scaled)
+
+```{r}
+bdatsw12 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw12 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw12, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "schwgt_scaled1")
+summary(modsw12)
+```
+
+**NULL Model for US**
+
+No weights
+
+```{r}
+bdatus1 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus1 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus1, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modus1)
+```
+
+
+Studwgt (scaled)
+
+```{r}
+bdatus2 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus2 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus2, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modus2)
+```
+
+Studwgt (unscaled)
+
+```{r}
+bdatus3 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus3 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus3, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "one")
+summary(modus3)
+```
+
+Totwgt (scaled)
+
+```{r}
+bdatus4 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus4 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus4, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT_scaled2", wgtlevel2 = "one")
+summary(modus4)
+```
+
+Totwgt (unscaled)
+
+```{r}
+bdatus5 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus5 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus5, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "one")
+summary(modus5)
+```
+
+Totwgt, studwgt (scaled)
+
+```{r}
+bdatus6 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus6 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus6, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modus6)
+```
+
+Schwgt (scaled)
+
+```{r}
+bdatus7 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus7 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus7, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "schwgt_scaled1")
+summary(modus7)
+```
+
+Studwgt and schwgt (both uncsclaed)
+
+```{r}
+bdatus8 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus8 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus8, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt")
+summary(modus8)
+```
+
+Totwgt and schwgt (both unscaled)
+
+```{r}
+bdatus9 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus9 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus9, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "schwgt")
+summary(modus9)
+```
+
+Studwgt (unscaled) and schwgt (scaled)
+
+```{r}
+bdatus10 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus10 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus10, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt_scaled1")
+summary(modus10)
+```
+
+Totwgt (unscaled) and schwgt (scaled)
+
+```{r}
+bdatus11 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus11 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus11, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "schwgt_scaled1")
+summary(modus11)
+```
+
+
+
+Totwgt, studwgt, and schwgt (both scaled)
+
+```{r}
+bdatus12 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus12 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus12, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "schwgt_scaled1")
+summary(modus12)
+```
+
+
+ *****STUDENT MODEL*****
+
+***Student Model for Sweden***
+
+No Weights
+
+```{r}
+bdatsw21 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw21 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw21, dep="BSMMAT",
+formula.fixed=~  masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modsw21)
+```
+
+Studwgt (unscaled)
+
+```{r}
+bdatsw22 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw22 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw22, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "one")
+summary(modsw22)
+```
+
+Studwgt (scaled)
+
+```{r}
+bdatsw23 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw23 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw23, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modsw23)
+```
+
+Totwgt (unscaled) 
+
+```{r}
+bdatsw24 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw24 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw24, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "one")
+summary(modsw24)
+```
+
+Totwgt (scaled)
+
+```{r}
+bdatsw25 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw25 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw25, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT_scaled2", wgtlevel2 = "one")
+summary(modsw25)
+```
+
+Schwgt (scaled)
+
+```{r}
+bdatsw26 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw26 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw26, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "schwgt_scaled1")
+summary(modsw26)
+```
+
+Studwgt and schwgt (both unscaled)
+
+```{r}
+bdatsw27 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw27 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw27, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt")
+summary(modsw27)
+```
+
+Totwgt, studwgt, and schwgt (both scaled)
+
+```{r}
+bdatsw28 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw28 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw28, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "schwgt_scaled1")
+summary(modsw28)
+```
+
+
+***Student Model for US***
+
+No Weights
+
+```{r}
+bdatus21 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus21 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus21, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modus21)
+```
+
+
+Studwgt (unscaled)
+
+```{r}
+bdatus22 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus22 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus22, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "one")
+summary(modus22)
+```
+
+
+Studwgt (scaled)
+
+```{r}
+bdatus23 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus23 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus23, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modus23)
+```
+
+
+Totwgt (unscaled) 
+
+```{r}
+bdatus24 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus24 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus24, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "one")
+summary(modus24)
+```
+
+
+Totwgt (scaled)
+
+```{r}
+bdatus25 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus25 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus25, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT_scaled2", wgtlevel2 = "one")
+summary(modus25)
+```
+
+
+Schwgt (scaled)
+
+```{r}
+bdatus26 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus26 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus26, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "schwgt_scaled1")
+summary(modus26)
+```
+
+
+Studwgt and schwgt (both unscaled)
+
+```{r}
+bdatus27 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus27 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus27, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt")
+summary(modus27)
+```
+
+
+Totwgt, studwgt, and schwgt (both scaled)
+
+```{r}
+bdatus28 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus28 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus28, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "schwgt_scaled1")
+summary(modus28)
+```
+
+
+
+
+***FULL Model***
+
+***Full Model for Sweden***
+
+No Weights
+
+```{r}
+bdatsw31 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw31 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw31, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modsw31)
+```
+
+
+Studwgt(unscaled)
+
+
+```{r}
+bdatsw32 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw32 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw32, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "one")
+summary(modsw32)
+```
+
+Studwgt(scaled)
+
+
+```{r}
+bdatsw33 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw33 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw33, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modsw33)
+```
+
+Totwgt(unscaled)
+
+
+```{r}
+bdatsw34 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw34 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw34, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "one")
+summary(modsw34)
+```
+
+Totwgt(scaled)
+
+
+```{r}
+bdatsw35 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw35 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw35, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT_scaled2", wgtlevel2 = "one")
+summary(modsw35)
+```
+
+Schwgt (scaled)
+
+
+```{r}
+bdatsw36 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw36 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw36, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "schwgt_scaled1")
+summary(modsw36)
+```
+
+Studwgt and schwgt (both unscaled)
+
+
+```{r}
+bdatsw37 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw37 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw37, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt")
+summary(modsw37)
+```
+
+Studwgt, totwgt, and schwgt (both scaled)
+
+
+```{r}
+bdatsw38 <- BIFIEsurvey::BIFIE.data.jack( data=sw, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modsw38 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatsw38, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "schwgt_scaled1")
+summary(modsw38)
+```
+
+***** FULL Model for US*****
+
+No Weights
+
+```{r}
+bdatus31 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus31 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus31, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modus31)
+```
+
+Studwgt (unscaled)
+
+```{r}
+bdatus32 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus32 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus32, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "one")
+summary(modus32)
+```
+
+Studwgt(scaled)
+
+```{r}
+bdatus33 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus33 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus33, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "one")
+summary(modus33)
+```
+
+
+Totwgt(unscaled)
+
+```{r}
+bdatus34 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus34 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus34, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT", wgtlevel2 = "one")
+summary(modus34)
+```
+
+TOTWGT(scaled)
+
+```{r}
+bdatus35 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus35 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus35, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="TOTWGT_scaled2", wgtlevel2 = "one")
+summary(modus35)
+```
+
+Schwgt(scaled)
+
+```{r}
+bdatus36 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus36 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus36, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "schwgt_scaled1")
+summary(modus36)
+```
+
+Studwgt and schwgt (both unscaled)
+
+```{r}
+bdatus37 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus37 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus37, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt", wgtlevel2 = "schwgt")
+summary(modus37)
+```
+
+Studwgt,totwgt, and schwgt (both scaled)
+
+```{r}
+bdatus38 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus38 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus38, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex + sclimats + gattens + sclocs + scres, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "schwgt_scaled1")
+summary(modus38)
+```
+
+
+
+
+# Results	
+
+I found the raw data from IEA webpage signed the agreements of using it. Then, I downloaded the data that I need for this analysis and then, I merged datasets and picked the variables that I need for this analysis.There are two level data- school level data (2nd) and student level data(1st). 
+
+**For the Student Level Data (1st Level Independent Variables)** 
+
+1) transformed all omitted data to NA (which was initially coded as 9)
+
+2) Created "msc" (Mathe self Concept), "atm" (Attitude toward Mathematics), "vm" (Valuing Mathemtics), "ses" (Socioeconomics Status), "sex" Sex variables. In order to do that I took the appropriate variables, grouped them, reverse coded in case of need, rescaled some of them, cut into different categories after summing or averaging, transferred into numeric value, and renamed.I also did an initial weighting and calculated the informativness of weights.
+
+3) Used Listwise deletion to delete all the NAs.
+
+4) Calculated the Informativeness of the weights for students by finding out the effective size and comparing it with the real size.
+
+**For the 1st Level Outcome Variables** 
+
+1) Averaged and created a new variables based on five plausible values which were multiple imputations for math scores
+
+**For the School Level Data (2nd level Independent Variables)**
+
+1) transformed all omitted data to NA (which was initially coded as 9)
+
+2) Created "sclim" (School Climate), "ga" (Good Attendance), "sloc" (School Location), and "sre" (School Resources) variables. I took the appropriate variables, grouped them, reverse coded in case of need, rescaled some of them, cut into different categories after summing or averaging, transferred into numeric value, and renamed.
+
+3) Calculated the Informativeness of the weights for schools by finding out the effective size and comparing it with the real size.
+
+3) Used MICE package for Multiple Imputation for the second level independent variables (sclim, ga, sloc, sre).
+
+Please see HERE for codes (https://github.com/rn2407stanford/Laukaityte2018/blob/main/Codes/Variable%20Changes)
+
+
+**Scaling Variables**
+
+This week I scaled studwgt, TOTWGT, and SCHWGT variables using two equations provided by the author. 
+
+Please see here the codes (https://github.com/rn2407stanford/Laukaityte2018/blob/main/Multilevel%20Analysis%20Codes)
+
+**MULTILEVEL ANALYSIS**
+
+I run 
+
+1) Null unweighted Model for US and Sweden considering Mathscore as a dependent and CNTSCH as an independent variable.
+
+2) Calculated ICC for the 1) Model
+
+3) Student unweighted Model for US and Sweden adding first level independent msc, atm, vm, ses, sex variables to the model.
+
+4) Full unweighted Model for US and Sweden adding sclim, ga, sloc, sre second level independent variables to the previous model.
+
+Please see here the codes (https://github.com/rn2407stanford/Laukaityte2018/blob/main/Multilevel%20Analysis%20Codes)
+
+
+### Summary of Replication Attempt
+
+### Commentary
+
+
+# Reference
+
+Olson, J. F., M. O. Martin, and I. V. S. Mullis. (Ed.). 2008. TIMSS 2007 technical report. Chestnut Hill, MA: TIMSS & PIRLS International Study Center, Boston College.
