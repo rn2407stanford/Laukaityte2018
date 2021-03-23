@@ -1,0 +1,432 @@
+---
+title: "2019 TIMSS"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(writexl)
+library("readxl")
+```
+
+Student level
+```{r}
+library(haven)
+Data <- read_sav("bsgkwtm7.sav")
+head(Data)
+```
+
+
+bsgarmm5
+Selecting the variables that I am going to use to make the dataset neater
+
+```{r}
+Data = Data %>%
+  select(IDCNTRY, IDSCHOOL, IDCLASS, IDSTUD, ITSEX,TOTWGT, HOUWGT, SENWGT, WGTADJ1, WGTADJ2, WGTADJ3, WGTFAC1, WGTFAC2, WGTFAC3, BSBM19A,BSBM19B, BSBM19C, BSBM19D, BSBM20A, BSBM20B, BSBM20C, BSBM20D, BSBM16A, BSBM16C, BSBM16E, BSBG04, BSBG05A, BSBG05B, BSBG01, BSMMAT01, BSMMAT02, BSMMAT03, BSMMAT04, BSMMAT05)
+```
+
+First, I am going to make an analysis for Sweden and then focus on US. Hence, I am specifying subset first for Sweden after running the analysis I am putting # mark in front of Sweden and then running all over again for US.
+
+```{r}
+
+ndata<-subset(Data, Data$IDCNTRY==414) #forUSA
+
+# Deleting Omited data as did the author
+ndata <- na.omit(ndata)
+n<-length(ndata$IDSCHOOL) #for specifying the number of students
+```
+
+In the dataset 9 and NA are for ommited data, so I want to make them the same in order to delete later.
+
+```{r}
+for(i in 1:n){
+ifelse(ndata$BSBM16A[i]==9, ndata$BSBM16A[i]<-NA, ndata$BSBM16A[i]<-ndata$BSBM16A[i])
+ifelse(ndata$BSBM16C[i]==9, ndata$BSBM16C[i]<-NA, ndata$BSBM16C[i]<-ndata$BSBM16C[i])
+ifelse(ndata$BSBM16E[i]==9, ndata$BSBM16E[i]<-NA, ndata$BSBM16E[i]<-ndata$BSBM16E[i])
+}
+for(i in 1:n){
+ifelse(ndata$BSBG04[i]==9, ndata$BSBG04[i]<-NA, ndata$BSBG04[i]<-ndata$BSBG04[i])
+ifelse(ndata$BSBG05A[i]==9, ndata$BSBG05A[i]<-NA, ndata$BSBG05A[i]<-ndata$BSBG05A[i])
+ifelse(ndata$BSBG05B[i]==9, ndata$BSBG05B[i]<-NA, ndata$BSBG05B[i]<-ndata$BSBG05B[i])
+}
+
+for(i in 1:n){
+ifelse(ndata$BSBM19A[i]==9, ndata$BSBM19A[i]<-NA, ndata$BSBM19A[i]<-ndata$BSBM19A[i])
+ifelse(ndata$BSBM19B[i]==9, ndata$BSBM19B[i]<-NA, ndata$BSBM19B[i]<-ndata$BSBM19B[i])
+ifelse(ndata$BSBM19C[i]==9, ndata$BSBM19C[i]<-NA, ndata$BSBM19C[i]<-ndata$BSBM19C[i])
+ifelse(ndata$BSBM19D[i]==9, ndata$BSBM19D[i]<-NA, ndata$BSBM19D[i]<-ndata$BSBM19D[i])
+}
+
+for(i in 1:n){
+ifelse(ndata$BSBM20A[i]==9, ndata$BSBM20A[i]<-NA, ndata$BSBM20A[i]<-ndata$BSBM20A[i])
+ifelse(ndata$BSBM20B[i]==9, ndata$BSBM20B[i]<-NA, ndata$BSBM20B[i]<-ndata$BSBM20B[i])
+ifelse(ndata$BSBM20C[i]==9, ndata$BSBM20C[i]<-NA, ndata$BSBM20C[i]<-ndata$BSBM20C[i])
+ifelse(ndata$BSBM20D[i]==9, ndata$BSBM20D[i]<-NA, ndata$BSBM20D[i]<-ndata$BSBM20D[i])
+}
+
+ndata <- na.omit(ndata)
+```
+
+
+```{r}
+n<-length(ndata$IDSCHOOL)
+```
+
+TRANSFORMING THE FIRST(STUDENT) LEVEL VARIABLES
+
+***Creating "Math selth-concept" variables based on TIMSS original variables
+
+```{r}
+# Reverese Code BSBM19C and BSBM19B variables
+
+for(i in 1:n){
+if(ndata$BSBM19C[i]==1) ndata$BSBM19C[i]<-4
+else if(ndata$BSBM19C[i]==2) ndata$BSBM19C[i]<-3
+else if(ndata$BSBM19C[i]==3) ndata$BSBM19C[i]<-2
+else ndata$BSBM19C[i]<-1
+}
+
+for(i in 1:n){
+if(ndata$BSBM19B[i]==1) ndata$BSBM19B[i]<-4
+else if(ndata$BSBM19B[i]==2) ndata$BSBM19B[i]<-3
+else if(ndata$BSBM19B[i]==3) ndata$BSBM19B[i]<-2
+else ndata$BSBM19B[i]<-1
+}
+```
+
+
+```{r}
+# Find the Average
+mscav<-(ndata$BSBM19A + ndata$BSBM19C + ndata$BSBM19D + ndata$BSBM19B)/4
+```
+
+```{r}
+# Rescale the Variable
+msc<-rep(NA, n)
+for(i in 1:n){
+if(mscav[i]<=2.5) msc[i]<-1 #High
+else if(mscav[i]>2.5) msc[i]<-0 #Low
+}
+```
+
+*** Creating "Attitude towards mathematics" variable
+
+```{r}
+# Reverse code the BSBM16C variable
+for(i in 1:n){
+if(ndata$BSBM16C[i]==1) ndata$BSBM16C[i]<-4
+else if(ndata$BSBM16C[i]==2) ndata$BSBM16C[i]<-3
+else if(ndata$BSBM16C[i]==3) ndata$BSBM16C[i]<-2
+else ndata$BSBM16C[i]<-1
+}
+```
+
+```{r}
+# Average the three variables
+attav<-(ndata$BSBM16A + ndata$BSBM16C + ndata$BSBM16E)/3
+```
+
+
+```{r}
+# Rescale the avregaed variable
+atm<-rep(NA, n)
+for(i in 1:n){
+if(attav[i]<=2.5) atm[i]<-1
+else if(attav[i]>2.5) atm[i]<-0
+}
+```
+
+***** Creating "Valuing mathematics" Variable
+
+```{r}
+# Average the variables
+valav<-(ndata$BSBM20A + ndata$BSBM20B + ndata$BSBM20C + ndata$BSBM20D)/4
+```
+
+
+```{r}
+# Rescale the variable
+vm<-rep(NA, n)
+for(i in 1:n){
+if(valav[i]<=2.5) vm[i]<-1
+else if(valav[i]>2.5) vm[i]<-0
+}
+```
+
+*** Creating SES Variable
+
+```{r}
+# Recode Number of Books at Home variable
+book<-rep(NA, n)
+for(i in 1:n){
+if(ndata$BSBG04[i]==1 | ndata$BSBG04[i]==2) book[i]<-1
+else if(ndata$BSBG04[i]==3 | ndata$BSBG04[i]==4) book[i]<-2
+else book[i]<-3
+}
+```
+
+```{r}
+#Computer & Study desk
+for(i in 1:n){
+ndata$BSBG05A[i]<-ifelse(ndata$BSBG05A[i]==1,1,0)
+ndata$BSBG05B[i]<-ifelse(ndata$BSBG05B[i]==1,1,0)
+}
+```
+
+
+```{r}
+# Sum two variables
+hedusum<-ndata$BSBG05A+ndata$BSBG05B
+```
+
+```{r}
+# REscale the variable
+
+hedu<-rep(NA, n)
+for(i in 1:n){
+if(hedusum[i] <=1) hedu[i]<-1
+else if(hedusum[i]==2) hedu[i]<-2
+}
+```
+
+```{r}
+# Average the two variables
+
+sesav<-(book+hedu)/2
+```
+
+```{r}
+# Rescale the SES variable
+
+ses<-rep(NA, n)
+for(i in 1:n){
+if(sesav[i]<2) ses[i]<-0
+else if(sesav[i]>=2) ses[i]<-1
+}
+```
+
+*******Aggregated Student level factors
+
+```{r}
+k<-length(unique(ndata$IDSCHOOL))
+k1<-unique(ndata$IDSCHOOL)
+
+masca<-rep(NA,k)
+for(i in 1:k){
+masca[k1[i]]<-mean(msc[ndata$IDSCHOOL==k1[i]])
+}
+
+mascav<-rep(NA,n)
+for(i in 1:n){
+mascav[i]<-masca[ndata$IDSCHOOL[i]]
+}
+
+attmaa<-rep(NA,k)
+for(i in 1:k){
+attmaa[k1[i]]<-mean(atm[ndata$IDSCHOOL==k1[i]])
+}
+
+attmav<-rep(NA,n)
+for(i in 1:n){
+attmav[i]<-attmaa[ndata$IDSCHOOL[i]]
+}
+
+valmaa<-rep(NA,k)
+for(i in 1:k){
+valmaa[k1[i]]<-mean(vm[ndata$IDSCHOOL==k1[i]])
+}
+
+valmav<-rep(NA,n)
+for(i in 1:n){
+valmav[i]<-valmaa[ndata$IDSCHOOL[i]]
+}
+
+sesa<-rep(NA,k)
+for(i in 1:k){
+sesa[k1[i]]<-mean(ses[ndata$IDSCHOOL==k1[i]])
+}
+
+sesav<-rep(NA,n)
+for(i in 1:n){
+sesav[i]<-sesa[ndata$IDSCHOOL[i]]
+}
+```
+
+
+```{r}
+#Recalculated student weight (without weights for selecting a school)
+studwgt<-ndata$WGTADJ2*ndata$WGTFAC2*ndata$WGTADJ3*ndata$WGTFAC3
+```
+
+
+In order to make the process easier for me I will create and download a new file only with student level factors, weights and Plausible Values for Sweden. Then I will rerun the above same exact codes for US and will put # sign in front of the Sweden values and v=create similar file for US.
+
+
+A new file only with student level factors, weights and Plausible Values for USA
+
+```{r}
+data<-data.frame(IDCNTRY=ndata$IDCNTRY, IDSCHOOL=ndata$IDSCHOOL, IDCLASS=ndata$IDCLASS, IDSTUD=ndata$IDSTUD, sex=ndata$ITSEX, msc, atm, vm, ses, mascav, attmav, valmav, sesav, TOTWGT=ndata$TOTWGT, HOUWGT=ndata$HOUWGT, SENWGT=ndata$SENWGT, studwgt, BSMMAT01=ndata$BSMMAT01, BSMMAT02=ndata$BSMMAT02, BSMMAT03=ndata$BSMMAT03, BSMMAT04=ndata$BSMMAT04, BSMMAT05=ndata$BSMMAT05)
+```
+
+
+
+**** Creating A new file with the student and school level factors for Sweden to make my work less confusing
+
+
+A new file with the student and school level factors for USA
+
+```{r}
+data<-data.frame(data)
+```
+
+********************************
+****** Merging Sweden's and USA files
+********************************
+
+
+****Merging two tables with US and Sweden data
+
+
+data<-rbind(datas, datau)
+
+```{r}
+#recode sex because I just noticed the sex is recoded in the paper
+n<-length(data$IDSCHOOL)
+for(i in 1:n){
+data$sex[i]<-ifelse(data$sex[i]==1,0,1)
+}
+```
+
+I will download just to be safe and keep the results for my records
+```{r}
+#write.csv(data, "Timss2011_SE&USAall_1402.csv", row.names=FALSE)
+```
+
+
+****************************************************
+ MULTIPLE IMPUTATION for the second level variables
+****************************************************
+
+I will first summarize to explore the missing data
+
+```{r}
+summary(data)
+```
+ Add the Mice package for Multiple Imputation
+ 
+```{r}
+data = data %>%
+  mutate(Mathscore = (BSMMAT01 + BSMMAT02 + BSMMAT03 + BSMMAT04 + BSMMAT05)/5)
+```
+
+
+```{r}
+us<-subset(data, data$IDCNTRY==414) #for USA
+```
+
+
+
+***************************************
+SCALING studwgt, totalwgt, and schwgt
+***************************************
+
+Now we need to scale Studwgt, TOTWGT, and schwgt weights based on the two formulas provided by the author for US and Sweden seperatelly
+
+
+* Scaling STUDWGT
+
+***********For US
+
+```{r}
+us=us %>%
+  mutate( studwgt_scaled1 = (us$studwgt*sum(us$studwgt))/sum(us$studwgt*us$studwgt))
+```
+
+
+Scaling Method 2 (STUDWGT)
+
+
+************ For US
+```{r}
+n <- nrow(us)
+us$studwgt_scaled2 <- n * us$studwgt / sum(us$studwgt)
+```
+
+*** Scaling TOTWGT
+
+*** Scaling Method 1 for TOTWGT`
+
+**********For US
+```{r}
+us=us %>%
+  mutate( TOTWGT_scaled1 = (us$TOTWGT*sum(us$TOTWGT))/sum(us$TOTWGT*us$TOTWGT))
+```
+
+
+*** Scaling Method 2 for TOTWGT
+
+**********for US
+
+```{r}
+n <- nrow(us)
+us$TOTWGT_scaled2 <- n * us$TOTWGT / sum(us$TOTWGT)
+```
+
+
+Download Packages for HLM
+```{r}
+library(BIFIEsurvey)
+```
+
+
+**************************
+**MULTILEVEL ANALYSIS**
+**************************
+
+**NULL Model for US**
+
+No weights
+
+```{r}
+bdatus1 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus1 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus1, dep="BSMMAT",
+formula.fixed=~1, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modus1)
+```
+
+
+ *****STUDENT MODEL*****
+
+***Student Model for US***
+
+No Weights
+
+```{r}
+bdatus21 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= NULL, pv_vars=c("BSMMAT") )
+```
+
+```{r}
+modus21 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus21, dep="BSMMAT",
+formula.fixed=~ msc + atm + vm + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="one", wgtlevel2 = "one")
+summary(modus21)
+```
+
+
+
+
+Totwgt, studwgt, and schwgt (both scaled)
+
+
+bdatus28 <- BIFIEsurvey::BIFIE.data.jack( data=us, jktype="JK_GROUP", jkzone="IDSCHOOL", wgt= "TOTWGT_scaled2", pv_vars=c("BSMMAT") )
+
+
+modus28 <- BIFIEsurvey::BIFIE.twolevelreg( BIFIEobj= bdatus28, dep="BSMMAT",
+formula.fixed=~ masc + attma + valma + ses + sex, formula.random=~1, idcluster="IDSCHOOL", wgtlevel1="studwgt_scaled2", wgtlevel2 = "schwgt_scaled1")
+summary(modus28)
